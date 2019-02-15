@@ -10,7 +10,8 @@ void rotate(float angle_of_rotation);
 
 task main
 {
-	go_straight(0.61);
+	//go_straight(0.61);
+	rotate(-PI);
 }
 
 void go_straight(float dist)
@@ -42,15 +43,41 @@ void rotate(float angle_of_rotation)
 	nMotorEncoder[rightMotor] = 0;
 	nMotorEncoder[leftMotor] = 0;
 
-	//float rightEncoder = angle_of_rotation
+	int ccw;
+	int cw;
+	
+	float rightEncoderCCW = abs(ccw*angle_of_rotation);
+	float rightEncoderCW = abs(cw*angle_of_rotation);
+
 
 	//While less than 1000 encoder counts of the right motor
-	while(abs(nMotorEncoder[rightMotor]) < rightEncoder)
+	if (angle_of_rotation>=0)
 	{
-		//Move CCW at half power
-		motor[rightMotor] = 45;
-		motor[leftMotor]	= -45;
+		rightEncoderCCW = abs(ccw*angle_of_rotation);
+		while(abs(nMotorEncoder[rightMotor]) < rightEncoderCCW)
+		{
+			//Move CCW at half power
+			motor[rightMotor] = 45;
+			motor[leftMotor]	= -45;
+		}
 	}
+	if (angle_of_rotation<0)
+	{
+		cw = 750;
+		rightEncoderCW = abs(cw*angle_of_rotation);
+		if(angle_of_rotation<=-PI/2)
+		{
+		cw = 325;
+		rightEncoderCW = abs(cw*angle_of_rotation);
+		}
+		while(abs(nMotorEncoder[rightMotor]) < rightEncoderCW)
+			{
+				//Move CW at half power
+				motor[rightMotor] = -45;
+				motor[leftMotor]	= 45;
+		}
+	}
+
 	motor[rightMotor] = 0;
 	motor[leftMotor]	= 0;
 }
