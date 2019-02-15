@@ -11,7 +11,7 @@ void rotate(float angle_of_rotation);
 task main
 {
 	//go_straight(0.61);
-	rotate(-PI);
+	rotate(5*PI/4);
 }
 
 void go_straight(float dist)
@@ -53,6 +53,7 @@ void rotate(float angle_of_rotation)
 	//While less than 1000 encoder counts of the right motor
 	if (angle_of_rotation>=0)
 	{
+		ccw=275;
 		rightEncoderCCW = abs(ccw*angle_of_rotation);
 		while(abs(nMotorEncoder[rightMotor]) < rightEncoderCCW)
 		{
