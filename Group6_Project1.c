@@ -46,6 +46,8 @@ Vec2 A, B;				// A and B denote the starting and ending point of each segment, r
 	  B.y = waypoints[i+1][1];
 
     A.yaw = waypoint_onestep(A, B);
+	
+	
     
   }
 
@@ -63,9 +65,19 @@ Vec2 A, B;				// A and B denote the starting and ending point of each segment, r
 // if it is less than -PI then add 2*PI
 float waypoint_onestep( Vec2 A, Vec2 B )
 {
+	
 	// this is the angle (in radians) of a free vector pointing from A to B
 	float angle_at_destination = 0;
+	
 	angle_at_destination = atan((B.y-A.y)/(B.x-A.x));
+	diff_rotation = angle_at_destination-A.yaw;
+	
+	float distance_to_destination = sqrt(((A.x+B.x)*(A.x+B.x))+((A.y+B.y)*(A.y+B.y))) //distance equation
+	
+	
+	rotate(diff_rotation);
+	go_straight(distance_to_destination);
+	
 
 	
   return angle_at_destination;
