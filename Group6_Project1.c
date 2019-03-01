@@ -22,11 +22,19 @@ typedef struct
 
 const int N = 5; // the maximum number of waypoints
 float waypoints[N][2] =
-{ {0,      0},
+{
+	{0, 0},
+	{0,   0.25},
+	{-0.25,    0.25},
+	{-0.25,    0},
+
+/* Test Nav
+ {0,      0},
 	{-0.3,   -0.3},
 	{ 0.3,    0.3},
 	{-0.3,    0.3},
 	{0,        0}
+*/
 };
 
 void go_straight(float dist, float starting_x, float starting_y, float theta);
