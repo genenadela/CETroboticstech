@@ -11,6 +11,7 @@ const int NUM_POINTS = 500;	// maximum # of positions to collect/compute/save
 float data[NUM_POINTS][2];	// the 2D array to save the computed position of the obstacles deteced
 int count = 0;			// counter of how many positions computed
 
+const float wheel_radius = 0.034;
 
 typedef struct
 {
@@ -88,7 +89,7 @@ void go_straight(float dist, float starting_x, float starting_y, float theta)
 	nMotorEncoder[rightMotor] = 0;
 	nMotorEncoder[leftMotor] = 0;
 
-	float rightEncoder = (dist*360)/(2*PI*0.034);
+	float rightEncoder = (dist*360)/(2*PI*wheel_radius);
 
 	//While less than 1000 encoder counts of the right motor
 	while(abs(nMotorEncoder[rightMotor]) < rightEncoder)
@@ -96,7 +97,7 @@ void go_straight(float dist, float starting_x, float starting_y, float theta)
 		if( time1(T1) > 100 & count < NUM_POINTS & SensorValue(sonarSensor) < 100)
 		{
     	//////////////////////////   student needs to fill in this portion ////////////////////////////////
-    	float d = abs((nMotorEncoder[rightMotor]*2*PI*0.034)/360);
+    	float d = abs((nMotorEncoder[rightMotor]*2*PI*wheel_radius)/360);
     	float s = sonarSensor*100;
 		
 		//collect sonar data, do necessary computations, and save the computed data into the array ---- data
