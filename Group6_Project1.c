@@ -54,6 +54,15 @@ task main
 		A.yaw = waypoint_onestep(A, B);
 	}
 	
+		//write all saved data into DebugStreem for offline Matlab plotting
+	writeDebugStream("\n new trial\n");
+	// save the waypoints
+	for( int i = 0; i < N; i ++ )
+		writeDebugStream("%.2f %.2f\n", waypoints[i][0], waypoints[i][1]);
+	// save the computed target locations
+	for (int i = 0; i < count; i ++)
+		writeDebugStream("%.2f %.2f\n", data[i][0], data[i][1]);
+
 }
 
 // inputs: A stands for the starting point and B stands for the ending point
@@ -98,11 +107,11 @@ void go_straight(float dist, float starting_x, float starting_y, float theta)
 		{
     	//////////////////////////   student needs to fill in this portion ////////////////////////////////
     	float d = abs((nMotorEncoder[rightMotor]*2*PI*wheel_radius)/360);
-    	float s = sonarSensor*100;
+    	float s = sonarSensor/100;
 		
 		//collect sonar data, do necessary computations, and save the computed data into the array ---- data
-			data[count][0] = // your computed x-coordinate of p_3
-			data[count][1] = // your computed y-coordinate of p_3
+			data[count][0] = starting_x+(d*cos(theta))+s*(cos(theta-(PI/2)));// your computed x-coordinate of p_3
+			data[count][1] = starting_y+(d*sin(theta))+s*(sin(theta-(PI/2)));// your computed y-coordinate of p_3
 		 	count ++;
 			clearTimer(T1);
 		}
@@ -115,6 +124,8 @@ void go_straight(float dist, float starting_x, float starting_y, float theta)
 	motor[leftMotor]	= 0;
 
 }
+
+
 
 void rotate(float angle_of_rotation)
 {
