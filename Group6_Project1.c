@@ -20,13 +20,13 @@ typedef struct
 	float yaw;  // orientation
 } Vec2;
 
-const int N = 5; // the maximum number of waypoints
+const int N = 4; // the maximum number of waypoints
 float waypoints[N][2] =
 {
 	{0, 0},
-	{0,   0.25},
-	{-0.25,    0.25},
-	{-0.25,    0},
+	{0,   0.35},
+	{-0.35,    0.35},
+	{-0.35,    0},
 
 /* Test Nav
  {0,      0},
@@ -43,8 +43,6 @@ float waypoint_onestep( Vec2 A, Vec2 B );
 
 task main
 {
-	
-
 	Vec2 A, B;				// A and B denote the starting and ending point of each segment, respectively
 	A.yaw = PI / 2.0; // the robot's original orientation w.r.t. the positive x-axis (assumed to be 90 degree)
 
@@ -61,16 +59,18 @@ task main
 
 		A.yaw = waypoint_onestep(A, B);
 	}
-	
-		//write all saved data into DebugStreem for offline Matlab plotting
-	writeDebugStream("\n new trial\n");
-	// save the waypoints
-	for( int i = 0; i < N; i ++ )
-		writeDebugStream("%.2f %.2f\n", waypoints[i][0], waypoints[i][1]);
-	// save the computed target locations
-	for (int i = 0; i < count; i ++)
-		writeDebugStream("%.2f %.2f\n", data[i][0], data[i][1]);
 
+		//write all saved data into DebugStreem for offline Matlab plotting
+	writeDebugStream("\n new trial, waypoints\n");
+	// save the waypoints
+	for( int i = 0; i < N; i ++ ){
+		writeDebugStream("%.4f %.4f\n", waypoints[i][0], waypoints[i][1]);
+}
+	writeDebugStream("\n new trial, data\n");
+	// save the computed target locations
+	for (int i = 0; i < count; i ++){
+		writeDebugStream("%.4f %.4f\n", data[i][0], data[i][1]);
+}
 }
 
 // inputs: A stands for the starting point and B stands for the ending point
@@ -114,12 +114,13 @@ void go_straight(float dist, float starting_x, float starting_y, float theta)
 		if( time1(T1) > 100 & count < NUM_POINTS & SensorValue(sonarSensor) < 100)
 		{
     	//////////////////////////   student needs to fill in this portion ////////////////////////////////
-    	float d = abs((nMotorEncoder[rightMotor]*2*PI*wheel_radius)/360);
-    	float s = sonarSensor/100;
-		
+    	float d = abs(nMotorEncoder[leftMotor]*2.0*PI*wheel_radius/360.0);
+    	float s = SensorValue(sonarSensor) * 0.01; 
+
 		//collect sonar data, do necessary computations, and save the computed data into the array ---- data
 			data[count][0] = starting_x+(d*cos(theta))+s*(cos(theta-(PI/2)));// your computed x-coordinate of p_3
 			data[count][1] = starting_y+(d*sin(theta))+s*(sin(theta-(PI/2)));// your computed y-coordinate of p_3
+    	
 		 	count ++;
 			clearTimer(T1);
 		}
