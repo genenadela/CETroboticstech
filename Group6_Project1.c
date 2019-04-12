@@ -53,11 +53,11 @@ void positionArm(float x_arm, float y_arm, float z_arm);
 void moveArm(float arm_angle);
 float waypoint_onestep( Vec2 A, Vec2 B );
 
+void positionArm_Lili(float x_arm, float y_arm, float z_arm); 
+void moveArm_Lili(float arm_angle); 
 task main
 {
-
-	positionArm(0.7754,-0.6203,0.1542);
-	//moveArm(-45);
+	positionArm_Lili(0.7754,-0.6203,0.1542+0.1);
 
 	/*
 	Vec2 A, B;				// A and B denote the starting and ending point of each segment, respectively
@@ -184,10 +184,10 @@ void translate(float dist)
 }
 
 void moveArm(float arm_angle){
-		
+
 		float motortimeup;
 		//float motortimedown;
-		
+
 		/*
 		if (arm_angle < 0){
 		float arm_amount = abs(arm_angle);
@@ -199,7 +199,7 @@ void moveArm(float arm_angle){
 			}
 		}
 		*/
-		
+
 		float arm_amount = abs(arm_angle);
 		motortimeup = 21*arm_amount;
 		while (motortimeup > 0) {
@@ -207,19 +207,19 @@ void moveArm(float arm_angle){
 		wait1Msec(1);
 		motortimeup = motortimeup - 1;
 			}
-		
-		
+
+
 		/*
 		float startingangle;
-		
+
 		while (startingangle < arm_angle) {
 			motor[armMotor] = -45;
 			wait1Msec(100);
 		startingangle = startingangle+0.1
-		
+
 		}
 		*/
-		
+
 
 }
 
@@ -247,7 +247,8 @@ void rotate(float angle_of_rotation)
 			motor[leftMotor]	= -45;
 		}
 	}
-	if (angle_of_rotation<0)
+	
+	/*if (angle_of_rotation<0)
 	{
 		cw = 750;
 		rightEncoderCW = abs(cw*angle_of_rotation);
@@ -262,10 +263,20 @@ void rotate(float angle_of_rotation)
 			motor[rightMotor] = -45;
 			motor[leftMotor]	= 45;
 		}
+	}*/
+	
+	if (angle_of_rotation<0)
+	{
+		motor[rightMotor] = -45;
+		motor[leftMotor]	= 45;
+		while(abs(nMotorEncoder[rightMotor]) < 5.8 * abs(angle_of_rotation)*180/PI)
+		{	
+		}		
 	}
-
+	
 	motor[rightMotor] = 0;
 	motor[leftMotor]	= 0;
+	
 }
 
 void positionArm(float x_arm, float y_arm, float z_arm) {
@@ -280,7 +291,7 @@ void positionArm(float x_arm, float y_arm, float z_arm) {
 	float solution_d2neg=sqrt(x_arm*x_arm+y_arm*y_arm)+k2*sin(solution_theta2neg)-k1*cos(solution_theta2neg);
 	float solution_theta2;
 	float solution_d2;
-	
+
 	writeDebugStream("\n Solution Theta1 = ");
 	writeDebugStream("%.4f", solution_theta1*180/PI);
 	writeDebugStream("\n Solution Theta2 Positive = ");
@@ -294,7 +305,7 @@ void positionArm(float x_arm, float y_arm, float z_arm) {
 	
 	solution_theta2neg = abs(solution_theta2neg);
 	solution_theta2pos = abs(solution_theta2pos);
-	
+
 	if (solution_theta2pos < solution_theta2neg) {
 		solution_d2 = solution_d2pos;
 		solution_theta2 = solution_theta2pos;
@@ -309,4 +320,37 @@ void positionArm(float x_arm, float y_arm, float z_arm) {
 	moveArm(solution_theta2*180/PI);
 
 
+}
+
+
+void positionArm_Lili(float x_arm, float y_arm, float z_arm) {
+	float k1=l2+l3*cos(th3);
+	float k2=l3*sin(th3);
+	float k3=z_arm-l1;
+	float nk=k3/sqrt(k1*k1+k2*k2);
+	
+	float solution_theta1=atan2(Y_arm,x_arm);
+	
+	float solution_theta2pos=atan2(k1,k2)+atan2(sqrt(1-nk*nk),nk);
+	float solution_theta2neg=atan2(k1,k2)+atan2(-sqrt(1-nk*nk),nk);
+	
+	float solution_d2pos=sqrt(x_arm*x_arm+y_arm*y_arm)+k2*sin(solution_theta2pos)-k1*cos(solution_theta2pos);
+	float solution_d2neg=sqrt(x_arm*x_arm+y_arm*y_arm)+k2*sin(solution_theta2neg)-k1*cos(solution_theta2neg);
+	
+	writeDebugStream("\n\n%.4f", solution_theta1*180/PI);
+	writeDebugStream("%.4f", solution_theta2neg*180/PI);	
+	writeDebugStream("%.4f", solution_d2neg);
+	
+	rotate(solution_theta1);
+	translate(solution_d2neg);
+	moveArm_Lili(solution_theta2neg*180/PI);
+	
+}
+
+void moveArm_Lili(float arm_angle)
+{
+	float AOR = 90 + arm_angle - 40;
+	motor[armMotor] = -45; 
+	wait1Msec(21*abs(AOR)); 
+	motor[armMotor] = 0; 
 }
