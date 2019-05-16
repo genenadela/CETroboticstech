@@ -32,6 +32,7 @@ char command;
 
 void setup() {
   Serial.begin(9600);
+  Serial1.begin(9600);
   pinMode(enaPinL, OUTPUT);
   pinMode(in1PinL, OUTPUT);
   pinMode(in2PinL, OUTPUT);
@@ -57,8 +58,8 @@ void loop() {
   
   
   
-  if(Serial.available()){
-    command = Serial.read();
+  if(Serial1.available()){
+    command = Serial1.read();
   }
 
   switch (command) {
