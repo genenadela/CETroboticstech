@@ -1,4 +1,9 @@
-#include <Servo.h>
+
+#include <Pixy2.h>
+
+
+#include <VarSpeedServo.h>
+#include <math.h>
 
 /*Robotics Technology Final Project
  * Autonomous Robot
@@ -15,8 +20,9 @@ const int in1PinR = 7; //Blue
 const int in2PinR = 6; //Purple
 
 //Encoder Setup
+const float encoderConstant = 76.5;
+const float encoderConstantAngle = 22;
 const int encoderOut = 4; //Encoder Pin
-const int numReadings = 10;
 int encoderValue = 0;
 int average;
 
@@ -24,11 +30,28 @@ int average;
 //Arm Setup
 int gripperPin = 5;
 int armPin = 3;
-Servo gripperServo;
-Servo armServo;
+VarSpeedServo gripperServo;
+VarSpeedServo armServo;
 int armCurrentPosition;
 
 char command;
+
+class Vector2
+{
+  public:
+  float x; // x-coordinate
+  float y; //y-coordinate
+  float yaw; //orientation
+  
+};
+
+
+float waypoints [4][2] = {
+  {0,0},
+  {0, 0.35},
+  {-0.35, 0.35},
+  {-0.35, 0},
+};
 
 void setup() {
   Serial.begin(9600);
@@ -41,55 +64,64 @@ void setup() {
   pinMode(in2PinR, OUTPUT);
   //pinMode(encoderOut, OUTPUT);
 
+  
+  
   gripperServo.attach(gripperPin);
   armServo.attach(armPin);
 
   gripperOn(); //resets gripper to closed state
-  armChangePosition(10);
-  armCurrentPosition = 0;
-
+  armChangePosition(15);
   
 
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
 
-  
-  
   
   if(Serial1.available()){
     command = Serial1.read();
   }
 
   switch (command) {
-    case  '1': //Full Rotation CW
-    setMotorLeft(255, true);
-    setMotorRight(255, true);
+    case  '1': //Waypoint Demo
+      waypointDemo();
+      
     break;
     
-    case '2': //
-    setMotorLeft(255, true);
-    setMotorRight(255, false);
+    case '2': //Move Forward 35cm
+      translate(0.35);
     break;
     
-    case '3': //Full Rotation CCW
-    setMotorLeft(255, false);
-    setMotorRight(255, false);
+    case '3': //Move Backward 35cm
+      translateBackwards(0.35);
     break;
     
-    case '4':
-    setMotorLeft(255, false);
-    setMotorRight(255, true);
+    case '4': //Rotate 90 deg CCW
+      rotate(1.57);
     break;
 
-    case '5':
-    
+    case '5': //Rotate 90 deg CW
+      rotate(-1.57);
+    break;
+
+    case '6': //Arm Position 30
+      armChangePosition(80);
+    break;
+
+    case '7': //Arm Position 10
+      armChangePosition(20);
+    break;
+
+    case '8':
+      gripperOn();
+    break;
+
+    case '9':
+      gripperOff();
     break;
 
     case '0':
-    setMotorLeft(0, false);
-    setMotorRight(0, false);
+    fullStop();
     break;
     
     default:
@@ -97,18 +129,8 @@ void loop() {
     break;
   }
 
-//encoderValue = encoderValue+digitalRead(encoderOut);
 
-/*
-for (int i=0; i<11; i++) {
-  encoderValue = encoderValue+digitalRead(encoderOut);
-  delay(100);
-  if (i==10) {
-    average=encoderValue/10;
-    i=0;
-  }
-}
-*/
+
 
 
 
@@ -116,39 +138,134 @@ for (int i=0; i<11; i++) {
 
 Serial.print("Total: ");
 Serial.print(encoderValue);
-Serial.print("  Average: ");
-Serial.println(average);
 
+}
+
+void waypointDemo() {
+  Vector2 A,B;
+  A.yaw=PI/2.0; //initial robot orientation is 90 degress (1.57 radians) wrt positive x-axis
+
+  for(int i=0;i<3;i++) {
+    //obtain starting points
+    A.x = waypoints[i][0];
+    A.y = waypoints[i][1];
+
+    //obtain ending points
+    B.x = waypoints[i+1][0];
+    B.y = waypoints[i+1][1];
+
+    A.yaw = waypointStep(A,B);
+  }
+}
+
+float waypointStep(Vector2 A, Vector2 B) {
+  float angle_at_destination = 0;
+  angle_at_destination = atan2((B.y-A.y),(B.x-A.x));
+  float diff_rotation = angle_at_destination-A.yaw;
+  if (diff_rotation > PI) {
+    diff_rotation=diff_rotation-2*PI;
+  }
+  if (diff_rotation < -PI) {
+    diff_rotation=diff_rotation+2*PI;
+  }
+
+  float distance_to_destination = sqrt(((B.x-A.x)*(B.x-A.x))+((B.y-A.y)*(B.y-A.y)));
+  rotate(diff_rotation);
+  translate(distance_to_destination);
+  return angle_at_destination;
+}
+
+void translate(float dist) { //moves robot forward in meters
+
+  float encoderGoal = dist*encoderConstant;
+  encoderValue = 0; //initialize encoder value
+
+  while(encoderValue < encoderGoal) {
+    moveForward();
+    encoderValue = encoderValue+digitalRead(encoderOut);
+    delay(10);
+  }
+  fullStop();
+}
+
+void translateBackwards(float dist) { //moves robot forward in meters
+
+  float encoderGoal = dist*encoderConstant;
+  encoderValue = 0; //initialize encoder value
+
+  while(encoderValue < encoderGoal) {
+    moveBackward();
+    encoderValue = encoderValue+digitalRead(encoderOut);
+    delay(10);
+  }
+  fullStop();
+}
+
+void rotate(float angle) { //rotate robot in radians
+  
+  float encoderGoal = fabs(angle*encoderConstantAngle);
+  encoderValue = 0;
+  
+  if (angle >= 0) {
+    while (encoderValue < encoderGoal) {
+      rotateCCW();
+      encoderValue = encoderValue+digitalRead(encoderOut);
+      delay(10);
+    }
+  }
+  else {
+    while (encoderValue < encoderGoal) {
+      rotateCW();
+      encoderValue = encoderValue+digitalRead(encoderOut);
+      delay(10);
+    }
+  }
+  fullStop();
+  
+}
+
+void moveTest() {
+  moveForward();
+  delay(2000);
+  fullStop();
+ 
+}
+
+void moveForward() {
+  setMotorLeft(255, true);
+  setMotorRight(255, false);
+}
+
+void moveBackward() {
+  setMotorLeft(255, false);
+  setMotorRight(255, true);
+}
+
+void rotateCW() {
+  setMotorLeft(255, true);
+  setMotorRight(255, true);
+}
+
+void rotateCCW() {
+  setMotorLeft(255, false);
+  setMotorRight(255, false);
+}
+
+void fullStop() {
+  setMotorLeft(0, false);
+  setMotorRight(0, false);
 }
 
 void armChangePosition(int finalposition) {
-  
-  //int armDifference = position - armCurrentPosition;
-
-  if (finalposition >= armCurrentPosition){
-    int armDifference = finalposition - armCurrentPosition;
-    for (int i = 0; i <= armDifference; i++) {
-      armServo.write(i);
-      delay(50);
-    }
-  }
-  else if (armCurrentPosition > finalposition) {
-    int armDifference = armCurrentPosition - finalposition;
-    for (int i = armCurrentPosition; i <= armDifference; i--) {
-      armServo.write(i);
-      delay(50);
-    }
-  }
-  armCurrentPosition = finalposition;
-  
+      armServo.write(finalposition, 20, true);
 }
 
 void gripperOn() {
-  gripperServo.write(10);
+  gripperServo.write(10, 20, true);
 }
 
 void gripperOff() {
-  gripperServo.write(50);
+  gripperServo.write(50, 20, true);
 }
 
 void setMotorLeft(int speed, boolean reverse){
